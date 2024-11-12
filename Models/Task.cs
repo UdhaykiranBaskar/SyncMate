@@ -24,6 +24,12 @@ namespace SyncMate.Models
             Status = "Pending"; // Default status when task is created
         }
 
+        // Static method to return all tasks
+        public static List<Task> GetAllTasks()
+        {
+            return taskList;
+        }
+
         // Static method to create a task
         public static void CreateTask()
         {
@@ -58,11 +64,22 @@ namespace SyncMate.Models
             DisplayAllTasks(); // Show all tasks
 
             Console.WriteLine("Type 'back' at any point to return to the previous menu.");
-            Console.Write("Enter the task ID you want to edit: ");
-            string taskId = Console.ReadLine();
-            if (taskId.ToLower() == "back") return;
+            Console.Write("Enter the task ID or name you want to edit: ");
+            string taskIdentifier = Console.ReadLine();
+            if (taskIdentifier.ToLower() == "back") return;
 
-            Task taskToEdit = taskList.Find(t => t.TaskID == taskId);
+            Task taskToEdit;
+
+            // Check if input is a valid task ID (8 characters) or a task name
+            if (taskIdentifier.Length == 8 && taskList.Exists(t => t.TaskID == taskIdentifier))
+            {
+                taskToEdit = taskList.Find(t => t.TaskID == taskIdentifier);
+            }
+            else
+            {
+                taskToEdit = taskList.Find(t => t.Title.Equals(taskIdentifier, StringComparison.OrdinalIgnoreCase));
+            }
+
             if (taskToEdit != null)
             {
                 Console.Write("Enter new task title: ");
@@ -98,24 +115,73 @@ namespace SyncMate.Models
         {
             Console.Clear();
             Console.WriteLine("=== Complete Task ===");
-            DisplayAllTasks(); // Show all tasks
+            DisplayAllTasks(); // Show all tasks for reference
 
             Console.WriteLine("Type 'back' at any point to return to the previous menu.");
-            Console.Write("Enter the task ID you want to mark as completed: ");
-            string taskId = Console.ReadLine();
-            if (taskId.ToLower() == "back") return;
+            Console.Write("Enter the task ID or name you want to mark as completed: ");
+            string taskIdentifier = Console.ReadLine();
+            if (taskIdentifier.ToLower() == "back") return;
 
-            Task taskToComplete = taskList.Find(t => t.TaskID == taskId);
+            Task taskToComplete;
+
+            // Check if the input is a valid task ID (8 characters) or a task name
+            if (taskIdentifier.Length == 8 && taskList.Exists(t => t.TaskID == taskIdentifier))
+            {
+                taskToComplete = taskList.Find(t => t.TaskID == taskIdentifier);
+            }
+            else
+            {
+                taskToComplete = taskList.Find(t => t.Title.Equals(taskIdentifier, StringComparison.OrdinalIgnoreCase));
+            }
+
             if (taskToComplete != null)
             {
-                taskToComplete.Status = "Completed";
-                Console.WriteLine($"Task '{taskToComplete.Title}' marked as completed.");
+                if (taskToComplete.Status == "Completed")
+                {
+                    Console.WriteLine($"Task '{taskToComplete.Title}' is already marked as completed.");
+                }
+                else
+                {
+                    taskToComplete.Status = "Completed";
+                    Console.WriteLine($"Task '{taskToComplete.Title}' has been marked as completed.");
+                }
             }
             else
             {
                 Console.WriteLine("Task not found.");
             }
         }
+
+        // Static method to display all tasks, showing updated completion status
+        public static void DisplayAllTasks()
+        {
+            if (taskList.Count == 0)
+            {
+                Console.WriteLine("No tasks available.");
+            }
+            else
+            {
+                Console.WriteLine("=== Task List ===");
+                foreach (var task in taskList)
+                {
+                    task.DisplayTaskDetails();
+                    Console.WriteLine(); // Empty line between tasks
+                }
+            }
+        }
+
+        // Display details of a single task with updated status
+        public void DisplayTaskDetails()
+        {
+            Console.WriteLine($"Task ID: {TaskID}");
+            Console.WriteLine($"Title: {Title}");
+            Console.WriteLine($"Description: {Description}");
+            Console.WriteLine($"Due Date: {DueDate.ToShortDateString()}");
+            Console.WriteLine($"Priority: {Priority}");
+            Console.WriteLine($"Status: {Status}");
+        }
+
+
 
         // Static method to delete a task
         public static void DeleteTask()
@@ -141,34 +207,9 @@ namespace SyncMate.Models
             }
         }
 
-        // Static method to display all tasks
-        public static void DisplayAllTasks()
-        {
-            if (taskList.Count == 0)
-            {
-                Console.WriteLine("No tasks available.");
-            }
-            else
-            {
-                Console.WriteLine("=== Task List ===");
-                foreach (var task in taskList)
-                {
-                    task.DisplayTaskDetails();
-                    Console.WriteLine(); // Empty line between tasks
-                }
-            }
-        }
+    
 
-        // Display details of a single task
-        public void DisplayTaskDetails()
-        {
-            Console.WriteLine($"Task ID: {TaskID}");
-            Console.WriteLine($"Title: {Title}");
-            Console.WriteLine($"Description: {Description}");
-            Console.WriteLine($"Due Date: {DueDate.ToShortDateString()}");
-            Console.WriteLine($"Priority: {Priority}");
-            Console.WriteLine($"Status: {Status}");
-        }
+       
 
         // Method to get a valid future date input from the user
         private static DateTime GetValidFutureDate(string prompt)
